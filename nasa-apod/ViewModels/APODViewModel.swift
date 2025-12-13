@@ -62,11 +62,27 @@ class APODViewModel: ObservableObject {
     /// Loads APOD for the currently selected date
     func loadSelectedDateAPOD() async {
         guard selectedDate.isValidAPODDate else {
+            let errorMessage = "Invalid date selected. Please choose a date between June 16, 1995 and today."
             handleError(APODError.invalidDate)
             return
         }
         
         await loadAPOD(for: selectedDate)
+    }
+    
+    /// Validates if a given date is valid for APOD service
+    func isValidDate(_ date: Date) -> Bool {
+        return date.isValidAPODDate
+    }
+    
+    /// Gets a user-friendly error message for invalid dates
+    func getDateValidationMessage(for date: Date) -> String? {
+        if date < APIConfiguration.earliestDate {
+            return "APOD service started on June 16, 1995. Please select a later date."
+        } else if date > Date() {
+            return "APOD is not available for future dates. Please select today or an earlier date."
+        }
+        return nil
     }
     
     /// Retries the last failed request

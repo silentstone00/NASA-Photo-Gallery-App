@@ -13,8 +13,8 @@ struct RetryManager {
     
     /// Executes an async operation with exponential backoff retry logic
     static func withRetry<T>(
-        maxAttempts: Int = maxRetries,
-        baseDelay: TimeInterval = baseDelay,
+        maxAttempts: Int = 3,
+        baseDelay: TimeInterval = 1.0,
         operation: @escaping () async throws -> T
     ) async throws -> T {
         var lastError: Error?

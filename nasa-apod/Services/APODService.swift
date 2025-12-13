@@ -27,6 +27,8 @@ class APODService: APODServiceProtocol {
     private func performFetch(for date: Date?) async throws -> APODModel {
         let url = try buildURL(for: date)
         
+        print("APODService: Fetching from URL: \(url.absoluteString)")
+        
         do {
             let (data, response) = try await urlSession.data(from: url)
             
@@ -35,7 +37,19 @@ class APODService: APODServiceProtocol {
                 throw APODError.invalidResponse
             }
             
+            print("APODService: HTTP Status Code: \(httpResponse.statusCode)")
+            
+            // Handle specific HTTP error codes
+            if httpResponse.statusCode == 403 {
+                print("APODService: API key may be invalid or rate limited")
+                throw APODError.apiKeyMissing
+            }
+            
             guard 200...299 ~= httpResponse.statusCode else {
+                // Try to parse error message from response
+                if let errorString = String(data: data, encoding: .utf8) {
+                    print("APODService: Error response: \(errorString)")
+                }
                 throw APODError.networkError(URLError(.badServerResponse))
             }
             
@@ -46,12 +60,15 @@ class APODService: APODServiceProtocol {
             return apodModel
             
         } catch let decodingError as DecodingError {
+            print("APODService: Decoding error: \(decodingError)")
             throw APODError.decodingError(decodingError)
         } catch let urlError as URLError {
+            print("APODService: URL error: \(urlError)")
             throw APODError.networkError(urlError)
         } catch let apodError as APODError {
             throw apodError
         } catch {
+            print("APODService: Unknown error: \(error)")
             throw APODError.networkError(error)
         }
     }

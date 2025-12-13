@@ -23,7 +23,7 @@ extension View {
         self.gesture(
             DragGesture()
                 .onEnded { value in
-                    if abs(value.translation.y) > threshold && abs(value.translation.y) > abs(value.translation.x) {
+                    if abs(value.translation.height) > threshold && abs(value.translation.height) > abs(value.translation.width) {
                         onDismiss()
                     }
                 }
@@ -44,11 +44,11 @@ extension View {
 extension DragGesture.Value {
     /// Returns true if the drag is primarily vertical
     var isVerticalDrag: Bool {
-        abs(translation.y) > abs(translation.x)
+        abs(translation.height) > abs(translation.width)
     }
     
     /// Returns true if the drag is primarily horizontal
     var isHorizontalDrag: Bool {
-        abs(translation.x) > abs(translation.y)
+        abs(translation.width) > abs(translation.height)
     }
 }

@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import Combine
 
 @MainActor
 class APODViewModel: ObservableObject {
@@ -38,7 +39,8 @@ class APODViewModel: ObservableObject {
         clearError()
         
         do {
-            let apod = try await repository.getAPOD(for: targetDate == Date() ? nil : targetDate)
+            // Pass nil for today's date to let the API return the latest available APOD
+            let apod = try await repository.getAPOD(for: date)
             
             // Only update if this is still the most recent request
             if lastRequestedDate == targetDate {

@@ -127,7 +127,7 @@ enum ViewState {
 
 struct VoiceOverAnnouncer {
     /// Announces important state changes to VoiceOver users
-    static func announce(_ message: String, priority: AccessibilityNotificationPriority = .medium) {
+    static func announce(_ message: String) {
         DispatchQueue.main.async {
             UIAccessibility.post(notification: .announcement, argument: message)
         }
@@ -135,16 +135,16 @@ struct VoiceOverAnnouncer {
     
     /// Announces when new content is loaded
     static func announceContentLoaded(title: String) {
-        announce("New astronomy picture loaded: \(title)", priority: .high)
+        announce("New astronomy picture loaded: \(title)")
     }
     
     /// Announces errors to users
     static func announceError(_ error: String) {
-        announce("Error: \(error)", priority: .high)
+        announce("Error: \(error)")
     }
     
     /// Announces successful actions
     static func announceSuccess(_ message: String) {
-        announce(message, priority: .medium)
+        announce(message)
     }
 }

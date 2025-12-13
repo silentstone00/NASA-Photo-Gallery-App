@@ -14,21 +14,24 @@ protocol APODRepositoryProtocol {
 
 class APODRepository: APODRepositoryProtocol {
     private let apodService: APODServiceProtocol
-    private let networkManager: NetworkManager
+    private let networkManager: NetworkManager?
     
     // Simple in-memory cache to avoid redundant requests
     private var cache: [String: APODModel] = [:]
     private let cacheQueue = DispatchQueue(label: "APODRepository.cache", attributes: .concurrent)
     
-    init(apodService: APODServiceProtocol = APODService(), networkManager: NetworkManager = NetworkManager.shared) {
+    init(apodService: APODServiceProtocol = APODService(), networkManager: NetworkManager? = nil) {
         self.apodService = apodService
         self.networkManager = networkManager
     }
     
     func getAPOD(for date: Date?) async throws -> APODModel {
         // Check network connectivity first
-        try await MainActor.run {
-            try networkManager.checkConnectivity()
+        let isConnected = await MainActor.run { 
+            (networkManager ?? NetworkManager.shared).isConnected 
+        }
+        if !isConnected {
+            throw APODError.networkError(URLError(.notConnectedToInternet))
         }
         
         let cacheKey = date?.formattedForAPI() ?? "today"

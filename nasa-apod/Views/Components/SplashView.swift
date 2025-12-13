@@ -83,8 +83,8 @@ struct StarsBackground: View {
                     .fill(Color.white)
                     .frame(width: CGFloat.random(in: 1...3))
                     .position(
-                        x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
-                        y: CGFloat.random(in: 0...UIScreen.main.bounds.height)
+                        x: CGFloat.random(in: 0...400),
+                        y: CGFloat.random(in: 0...800)
                     )
                     .opacity(animateStars ? Double.random(in: 0.3...1.0) : 0.5)
             }

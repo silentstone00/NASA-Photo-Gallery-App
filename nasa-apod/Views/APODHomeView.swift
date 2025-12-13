@@ -51,6 +51,7 @@ struct APODHomeView: View {
                         Image(systemName: "calendar")
                     }
                     .disabled(viewModel.isLoading)
+                    .keyboardShortcut("d", modifiers: .command)
                     
                     Menu {
                         Button(action: {
@@ -96,6 +97,7 @@ struct APODHomeView: View {
                         hint: "Refresh the current astronomy picture"
                     )
                     .disabled(viewModel.isLoading)
+                    .keyboardShortcut("r", modifiers: .command)
                 }
             }
             .sheet(isPresented: $viewModel.showingDatePicker) {
@@ -116,15 +118,7 @@ struct APODHomeView: View {
                 await viewModel.refresh()
             }
         }
-        // Keyboard shortcuts for iPad/Mac
-        .keyboardShortcut("r", modifiers: .command) {
-            Task {
-                await viewModel.refresh()
-            }
-        }
-        .keyboardShortcut("d", modifiers: .command) {
-            viewModel.showDatePicker()
-        }
+
     }
 }
 

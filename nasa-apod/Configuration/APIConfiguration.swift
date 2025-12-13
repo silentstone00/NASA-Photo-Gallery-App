@@ -9,6 +9,7 @@ import Foundation
 
 struct APIConfiguration {
     static let baseURL = "https://api.nasa.gov/planetary/apod"
+    // NASA API key - get your own at https://api.nasa.gov
     static let apiKey = "9jKWkD7xQBhhksHxyKWcd1E8lCpwBzTP96Aiq6Ln"
     
     // APOD service started on this date

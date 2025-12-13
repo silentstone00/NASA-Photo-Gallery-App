@@ -43,6 +43,9 @@ class APODViewModel: ObservableObject {
             // Only update if this is still the most recent request
             if lastRequestedDate == targetDate {
                 currentAPOD = apod
+                
+                // Announce to VoiceOver users
+                VoiceOverAnnouncer.announceContentLoaded(title: apod.title)
             }
         } catch {
             // Only show error if this is still the most recent request
@@ -158,6 +161,11 @@ class APODViewModel: ObservableObject {
             errorMessage = apodError.localizedDescription
         } else {
             errorMessage = "An unexpected error occurred: \(error.localizedDescription)"
+        }
+        
+        // Announce error to VoiceOver users
+        if let errorMsg = errorMessage {
+            VoiceOverAnnouncer.announceError(errorMsg)
         }
         
         // Log error for debugging

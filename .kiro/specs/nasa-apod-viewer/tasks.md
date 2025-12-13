@@ -78,7 +78,7 @@
   - **Property 6: Orientation adaptation**
   - **Validates: Requirements 3.5**
 
-- [ ] 7. Integrate all views and finalize navigation
+- [x] 7. Integrate all views and finalize navigation
   - Wire up ContentView with navigation between main view, date selection, and image detail
   - Ensure proper data flow between all components
   - Test complete user workflows
@@ -88,7 +88,7 @@
   - **Property 1: Application startup loads content**
   - **Validates: Requirements 1.1**
 
-- [ ] 8. Final testing and polish
+- [x] 8. Final testing and polish
   - Ensure all tests pass, ask the user if questions arise
   - Test on different device sizes and orientations
   - Verify error handling across all scenarios

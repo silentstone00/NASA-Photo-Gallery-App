@@ -44,12 +44,43 @@ struct APODHomeView: View {
             .navigationTitle("NASA APOD")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button(action: {
                         viewModel.showDatePicker()
                     }) {
                         Image(systemName: "calendar")
                     }
+                    .disabled(viewModel.isLoading)
+                    
+                    Menu {
+                        Button(action: {
+                            Task {
+                                await viewModel.loadTodaysAPOD()
+                            }
+                        }) {
+                            Label("Today's APOD", systemImage: "star.fill")
+                        }
+                        
+                        Button(action: {
+                            Task {
+                                let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
+                                await viewModel.loadAPOD(for: yesterday)
+                            }
+                        }) {
+                            Label("Yesterday's APOD", systemImage: "star")
+                        }
+                        
+                        Divider()
+                        
+                        Button(action: {
+                            viewModel.showDatePicker()
+                        }) {
+                            Label("Select Date", systemImage: "calendar")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                    .disabled(viewModel.isLoading)
                 }
                 
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -60,6 +91,10 @@ struct APODHomeView: View {
                     }) {
                         Image(systemName: "arrow.clockwise")
                     }
+                    .accessibleButton(
+                        label: "Refresh",
+                        hint: "Refresh the current astronomy picture"
+                    )
                     .disabled(viewModel.isLoading)
                 }
             }
@@ -74,6 +109,21 @@ struct APODHomeView: View {
         }
         .task {
             await viewModel.loadTodaysAPOD()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            // Refresh content when app comes to foreground
+            Task {
+                await viewModel.refresh()
+            }
+        }
+        // Keyboard shortcuts for iPad/Mac
+        .keyboardShortcut("r", modifiers: .command) {
+            Task {
+                await viewModel.refresh()
+            }
+        }
+        .keyboardShortcut("d", modifiers: .command) {
+            viewModel.showDatePicker()
         }
     }
 }
@@ -103,10 +153,20 @@ struct APODContentView: View {
                     AsyncImageView(url: apod.bestImageURL, contentMode: .fit) {
                         viewModel.showImageDetail()
                     }
+                    .accessibleAPODContent(
+                        label: AccessibilityHelper.apodContentLabel(for: apod),
+                        hint: AccessibilityHelper.interactionHint(for: .tapToZoom),
+                        traits: [.isButton, .isImage]
+                    )
                     .padding(.horizontal)
                 } else {
                     // Video content
                     VideoContentView(apod: apod)
+                        .accessibleAPODContent(
+                            label: "Video content: \(apod.title)",
+                            hint: "Tap to open video in browser",
+                            traits: [.isButton]
+                        )
                         .padding(.horizontal)
                 }
                 

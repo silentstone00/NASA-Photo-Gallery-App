@@ -1,4 +1,4 @@
-# NASA APOD Viewer
+![sc1](https://github.com/user-attachments/assets/c2c28716-e8d5-4428-9993-9d2766db30ff)# NASA APOD Viewer
 
 A native iOS application built with SwiftUI that displays NASA's Astronomy Picture of the Day (APOD).
 
@@ -48,7 +48,7 @@ A native iOS application built with SwiftUI that displays NASA's Astronomy Pictu
 - Share button overlay on images
 
 #### Dark Mode
-- Inspired from <span style="color: #5523B2; font-weight: bold;">Aspora</span> Website Theme
+- Inspired from 💜 **Aspora** Website Theme
 - Full dark/light mode support
 - Manual toggle button in navigation bar
 - Custom theme colors:
@@ -66,7 +66,13 @@ Get your free NASA API key at: https://api.nasa.gov/
 
 ## Screenshots
 
-| Home Screen | Date Picker | Image Detail |
-|-------------|-------------|--------------|
-| Light/Dark mode support | Historical date selection | Pinch-to-zoom |
+<p align="center">
+  <img src="sc1" width="200" />
+  <img src="sc2" width="200" />
+  <img src="sc3" width="200" />
+  <img src="sc4" width="200" />
+</p>
+
+
+
 

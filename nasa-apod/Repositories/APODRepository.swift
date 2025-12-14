@@ -16,7 +16,7 @@ class APODRepository: APODRepositoryProtocol {
     private let apodService: APODServiceProtocol
     private let networkManager: NetworkManager?
     
-    // Simple in-memory cache to avoid redundant requests
+    
     private var cache: [String: APODModel] = [:]
     private let cacheQueue = DispatchQueue(label: "APODRepository.cache", attributes: .concurrent)
     
@@ -26,7 +26,7 @@ class APODRepository: APODRepositoryProtocol {
     }
     
     func getAPOD(for date: Date?) async throws -> APODModel {
-        // Check network connectivity first
+        
         let isConnected = await MainActor.run { 
             (networkManager ?? NetworkManager.shared).isConnected 
         }
@@ -36,15 +36,15 @@ class APODRepository: APODRepositoryProtocol {
         
         let cacheKey = date?.formattedForAPI() ?? "today"
         
-        // Check cache first
+        
         if let cachedAPOD = await getCachedAPOD(for: cacheKey) {
             return cachedAPOD
         }
         
-        // Fetch from API
+        
         let apod = try await apodService.fetchAPOD(for: date)
         
-        // Cache the result
+        
         await cacheAPOD(apod, for: cacheKey)
         
         return apod
@@ -73,7 +73,7 @@ class APODRepository: APODRepositoryProtocol {
         }
     }
     
-    // Method to clear cache if needed
+    
     func clearCache() async {
         await withCheckedContinuation { continuation in
             cacheQueue.async(flags: .barrier) {

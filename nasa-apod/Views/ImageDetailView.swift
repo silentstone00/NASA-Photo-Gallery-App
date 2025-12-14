@@ -17,8 +17,10 @@ struct ImageDetailView: View {
     @State private var lastOffset: CGSize = .zero
     @State private var showingMetadata = false
     @State private var orientation = UIDeviceOrientation.unknown
+    @State private var cachedImage: UIImage?
+    @State private var isLoading = true
+    @State private var showZoomHint = false
     
-    // Constants for zoom limits
     private let minScale: CGFloat = 1.0
     private let maxScale: CGFloat = 5.0
     
@@ -28,67 +30,58 @@ struct ImageDetailView: View {
                 .ignoresSafeArea()
             
             GeometryReader { geometry in
-                AsyncImage(url: URL(string: apod.bestImageURL)) { image in
-                    image
+                if let uiImage = cachedImage {
+                    Image(uiImage: uiImage)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
+                        .position(x: geometry.size.width / 2 + offset.width,
+                                  y: geometry.size.height / 2 + offset.height)
                         .scaleEffect(scale)
-                        .offset(offset)
                         .gesture(
-                            SimultaneousGesture(
-                                // Pinch to zoom gesture
-                                MagnificationGesture()
-                                    .onChanged { value in
-                                        let newScale = lastScale * value
-                                        scale = min(max(newScale, minScale), maxScale)
-                                    }
-                                    .onEnded { _ in
-                                        lastScale = scale
-                                        
-                                        // Snap back to minimum scale if too small
-                                        if scale < minScale {
-                                            withAnimation(.spring()) {
-                                                scale = minScale
-                                                lastScale = minScale
-                                                offset = .zero
-                                                lastOffset = .zero
-                                            }
-                                        }
-                                    },
-                                
-                                // Drag gesture for panning
-                                DragGesture()
-                                    .onChanged { value in
-                                        if scale > minScale {
-                                            offset = CGSize(
-                                                width: lastOffset.width + value.translation.width,
-                                                height: lastOffset.height + value.translation.height
-                                            )
+                            
+                            DragGesture()
+                                .onChanged { value in
+                                    let newOffset = CGSize(
+                                        width: lastOffset.width + value.translation.width,
+                                        height: lastOffset.height + value.translation.height
+                                    )
+                                    offset = newOffset
+                                }
+                                .onEnded { _ in
+                                    lastOffset = offset
+                                    
+                                    
+                                    if scale <= minScale {
+                                        withAnimation(.spring()) {
+                                            offset = .zero
+                                            lastOffset = .zero
                                         }
                                     }
-                                    .onEnded { _ in
-                                        lastOffset = offset
-                                        
-                                        // Constrain offset to keep image visible
-                                        let maxOffsetX = (geometry.size.width * (scale - 1)) / 2
-                                        let maxOffsetY = (geometry.size.height * (scale - 1)) / 2
-                                        
-                                        let constrainedOffset = CGSize(
-                                            width: min(max(offset.width, -maxOffsetX), maxOffsetX),
-                                            height: min(max(offset.height, -maxOffsetY), maxOffsetY)
-                                        )
-                                        
-                                        if constrainedOffset != offset {
-                                            withAnimation(.spring()) {
-                                                offset = constrainedOffset
-                                                lastOffset = constrainedOffset
-                                            }
+                                }
+                        )
+                        .gesture(
+                            
+                            MagnificationGesture()
+                                .onChanged { value in
+                                    let newScale = lastScale * value
+                                    scale = min(max(newScale, minScale), maxScale)
+                                }
+                                .onEnded { _ in
+                                    lastScale = scale
+                                    
+                                    
+                                    if scale < minScale {
+                                        withAnimation(.spring()) {
+                                            scale = minScale
+                                            lastScale = minScale
+                                            offset = .zero
+                                            lastOffset = .zero
                                         }
                                     }
-                            )
+                                }
                         )
                         .onTapGesture(count: 2) {
-                            // Double tap to zoom in/out
+                            
                             withAnimation(.spring()) {
                                 if scale > minScale {
                                     scale = minScale
@@ -96,18 +89,18 @@ struct ImageDetailView: View {
                                     offset = .zero
                                     lastOffset = .zero
                                 } else {
-                                    scale = 2.0
-                                    lastScale = 2.0
+                                    scale = 2.5
+                                    lastScale = 2.5
                                 }
                             }
                         }
                         .onTapGesture(count: 1) {
-                            // Single tap to toggle metadata
+                            
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 showingMetadata.toggle()
                             }
                         }
-                } placeholder: {
+                } else if isLoading {
                     VStack(spacing: 16) {
                         ProgressView()
                             .scaleEffect(1.5)
@@ -117,10 +110,26 @@ struct ImageDetailView: View {
                             .foregroundColor(.white)
                             .font(.headline)
                     }
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                } else {
+                    
+                    VStack(spacing: 16) {
+                        Image(systemName: "photo")
+                            .font(.system(size: 50))
+                            .foregroundColor(.white.opacity(0.5))
+                        
+                        Text("Failed to load image")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                    }
+                    .frame(width: geometry.size.width, height: geometry.size.height)
                 }
             }
+            .task {
+                await loadImage()
+            }
             
-            // Top toolbar
+            
             VStack {
                 HStack {
                     Button(action: {
@@ -132,6 +141,12 @@ struct ImageDetailView: View {
                             .background(Color.black.opacity(0.5))
                             .clipShape(Circle())
                     }
+                    
+                    Spacer()
+                    
+                    Text("High‑Res Image")
+                        .font(.headline)
+                        .foregroundColor(.white)
                     
                     Spacer()
                     
@@ -148,12 +163,13 @@ struct ImageDetailView: View {
                     }
                 }
                 .padding()
+                .background(Color.black.opacity(0.3))
                 
                 Spacer()
             }
             .opacity(showingMetadata ? 1 : 0.7)
             
-            // Metadata overlay
+            
             if showingMetadata {
                 VStack {
                     Spacer()
@@ -163,7 +179,7 @@ struct ImageDetailView: View {
                 }
             }
             
-            // Zoom indicator
+            
             if scale > minScale {
                 VStack {
                     HStack {
@@ -184,6 +200,27 @@ struct ImageDetailView: View {
                     Spacer()
                 }
             }
+            
+            // Pinch to zoom hint
+            if showZoomHint && cachedImage != nil && scale == minScale {
+                VStack {
+                    Spacer()
+                    
+                    HStack(spacing: 8) {
+                        Image(systemName: "hand.pinch")
+                            .font(.system(size: 16))
+                        Text("Pinch to zoom • Double-tap to zoom in")
+                            .font(.subheadline)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.black.opacity(0.7))
+                    .clipShape(Capsule())
+                    .padding(.bottom, 100)
+                }
+                .transition(.opacity)
+            }
         }
         .statusBarHidden()
         .dismissOnVerticalDrag {
@@ -194,7 +231,7 @@ struct ImageDetailView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             orientation = UIDevice.current.orientation
             
-            // Reset zoom when orientation changes for better UX
+            
             if scale > minScale {
                 withAnimation(.spring()) {
                     scale = minScale
@@ -207,6 +244,40 @@ struct ImageDetailView: View {
         .onAppear {
             orientation = UIDevice.current.orientation
         }
+        .onChange(of: cachedImage) { oldValue, newValue in
+            // Show hint when image loads
+            if newValue != nil && oldValue == nil {
+                withAnimation(.easeIn(duration: 0.3)) {
+                    showZoomHint = true
+                }
+                // Auto-hide after 3 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    withAnimation(.easeOut(duration: 0.5)) {
+                        showZoomHint = false
+                    }
+                }
+            }
+        }
+    }
+    
+    
+    
+    private func loadImage() async {
+        
+        let imageUrl = apod.hdurl ?? apod.url
+        
+        
+        if let cached = await ImageCacheManager.shared.getImage(for: imageUrl) {
+            cachedImage = cached
+            isLoading = false
+            return
+        }
+        
+        
+        if let downloaded = await ImageCacheManager.shared.downloadAndCache(from: imageUrl) {
+            cachedImage = downloaded
+        }
+        isLoading = false
     }
 }
 
@@ -251,18 +322,3 @@ struct MetadataOverlay: View {
     }
 }
 
-#Preview {
-    ImageDetailView(
-        apod: APODModel(
-            copyright: "Example Photographer",
-            date: "2024-01-15",
-            explanation: "This is an example explanation of today's astronomy picture. It contains detailed information about the celestial object or phenomenon shown in the image.",
-            hdurl: "https://example.com/hd-image.jpg",
-            mediaType: "image",
-            serviceVersion: "v1",
-            title: "Example Astronomy Picture",
-            url: "https://example.com/image.jpg"
-        ),
-        isPresented: .constant(true)
-    )
-}

@@ -110,7 +110,3 @@ struct ZoomableImageView: View {
     }
 }
 
-#Preview {
-    ZoomableImageView(imageURL: "https://example.com/image.jpg")
-        .frame(height: 400)
-}

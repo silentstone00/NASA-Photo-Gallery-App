@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Accessibility Extensions
 
 extension View {
-    /// Adds comprehensive accessibility support to views
+    
     func accessibleAPODContent(
         label: String,
         hint: String? = nil,
@@ -24,7 +24,7 @@ extension View {
             .accessibilityAddTraits(traits)
     }
     
-    /// Makes buttons more accessible with proper sizing and feedback
+
     func accessibleButton(
         label: String,
         hint: String? = nil
@@ -36,7 +36,7 @@ extension View {
             .frame(minWidth: AppConstants.minimumTapTargetSize, minHeight: AppConstants.minimumTapTargetSize)
     }
     
-    /// Adds accessibility support for images
+    
     func accessibleImage(
         label: String,
         decorative: Bool = false
@@ -54,7 +54,7 @@ extension View {
 // MARK: - Accessibility Helpers
 
 struct AccessibilityHelper {
-    /// Generates accessibility label for APOD content
+    
     static func apodContentLabel(for apod: APODModel) -> String {
         var components: [String] = []
         
@@ -72,7 +72,7 @@ struct AccessibilityHelper {
         return components.joined(separator: ", ")
     }
     
-    /// Generates accessibility hint for interactive elements
+
     static func interactionHint(for action: AccessibilityAction) -> String {
         switch action {
         case .tapToZoom:
@@ -90,7 +90,7 @@ struct AccessibilityHelper {
         }
     }
     
-    /// Generates accessibility value for dynamic content
+
     static func dynamicValue(for state: ViewState) -> String {
         switch state {
         case .loading:
@@ -126,24 +126,22 @@ enum ViewState {
 // MARK: - VoiceOver Announcements
 
 struct VoiceOverAnnouncer {
-    /// Announces important state changes to VoiceOver users
+    
     static func announce(_ message: String) {
         DispatchQueue.main.async {
             UIAccessibility.post(notification: .announcement, argument: message)
         }
     }
+
     
-    /// Announces when new content is loaded
     static func announceContentLoaded(title: String) {
         announce("New astronomy picture loaded: \(title)")
     }
     
-    /// Announces errors to users
     static func announceError(_ error: String) {
         announce("Error: \(error)")
     }
     
-    /// Announces successful actions
     static func announceSuccess(_ message: String) {
         announce(message)
     }

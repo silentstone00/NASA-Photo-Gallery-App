@@ -25,7 +25,7 @@ class LaunchStateManager: ObservableObject {
             UserDefaults.standard.set(true, forKey: AppConstants.UserDefaultsKeys.hasLaunchedBefore)
         }
         
-        // Simulate launch delay for smooth experience
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.isLoading = false
         }

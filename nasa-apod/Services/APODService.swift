@@ -32,28 +32,28 @@ class APODService: APODServiceProtocol {
         do {
             let (data, response) = try await urlSession.data(from: url)
             
-            // Check HTTP response status
+            
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw APODError.invalidResponse
             }
             
             print("APODService: HTTP Status Code: \(httpResponse.statusCode)")
             
-            // Handle specific HTTP error codes
+            
             if httpResponse.statusCode == 403 {
                 print("APODService: API key may be invalid or rate limited")
                 throw APODError.apiKeyMissing
             }
             
             guard 200...299 ~= httpResponse.statusCode else {
-                // Try to parse error message from response
+                
                 if let errorString = String(data: data, encoding: .utf8) {
                     print("APODService: Error response: \(errorString)")
                 }
                 throw APODError.networkError(URLError(.badServerResponse))
             }
             
-            // Decode the JSON response
+            
             let decoder = JSONDecoder()
             let apodModel = try decoder.decode(APODModel.self, from: data)
             
@@ -82,10 +82,10 @@ class APODService: APODServiceProtocol {
         
         var queryItems = [
             URLQueryItem(name: "api_key", value: APIConfiguration.apiKey),
-            URLQueryItem(name: "hd", value: "true") // Always request high-definition images
+            URLQueryItem(name: "hd", value: "true")
         ]
         
-        // Add date parameter if provided
+        
         if let date = date {
             guard APIConfiguration.isValidDate(date) else {
                 throw APODError.invalidDate

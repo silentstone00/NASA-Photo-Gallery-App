@@ -58,7 +58,7 @@ struct DateSelectionView: View {
                 .datePickerStyle(.wheel)
                 .padding(.horizontal)
                 
-                // Quick date selection buttons
+                
                 VStack(spacing: 8) {
                     Text("Quick Select")
                         .font(.headline)
@@ -130,9 +130,7 @@ struct DateSelectionView: View {
     }
 }
 
-#Preview {
-    DateSelectionView(viewModel: APODViewModel())
-}
+
 
 struct QuickDateButton: View {
     let title: String

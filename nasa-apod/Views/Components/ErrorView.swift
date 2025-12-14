@@ -10,6 +10,7 @@ import SwiftUI
 struct ErrorView: View {
     let message: String
     let onRetry: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
         VStack(spacing: 20) {
@@ -20,10 +21,11 @@ struct ErrorView: View {
             Text("Oops!")
                 .font(.title2)
                 .fontWeight(.bold)
+                .foregroundColor(colorScheme == .dark ? .white : .primary)
             
             Text(message)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundColor(colorScheme == .dark ? .white.opacity(0.7) : .secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
@@ -41,12 +43,8 @@ struct ErrorView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
+        .background(AppBackgroundColor())
     }
 }
 
-#Preview {
-    ErrorView(message: "Unable to load the astronomy picture. Please check your internet connection.") {
-        print("Retry tapped")
-    }
-}
+

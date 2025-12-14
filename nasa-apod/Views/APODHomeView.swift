@@ -9,12 +9,19 @@ import SwiftUI
 
 struct APODHomeView: View {
     @StateObject private var viewModel = APODViewModel()
+    @ObservedObject private var themeManager = ThemeManager.shared
+    @Environment(\.colorScheme) private var systemColorScheme
+    
+    
+    private var effectiveColorScheme: ColorScheme {
+        themeManager.colorSchemeOverride ?? systemColorScheme
+    }
     
     var body: some View {
         NavigationView {
             ZStack {
-                Color(.systemBackground)
-                    .ignoresSafeArea()
+                
+                AppBackgroundColor()
                 
                 if viewModel.isLoading {
                     LoadingView(message: "Fetching astronomy picture...")
@@ -42,7 +49,7 @@ struct APODHomeView: View {
                 }
             }
             .navigationTitle("NASA APOD")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -53,35 +60,16 @@ struct APODHomeView: View {
                     .disabled(viewModel.isLoading)
                     .keyboardShortcut("d", modifiers: .command)
                     
-                    Menu {
-                        Button(action: {
-                            Task {
-                                await viewModel.loadTodaysAPOD()
-                            }
-                        }) {
-                            Label("Today's APOD", systemImage: "star.fill")
+                    // Dark mode toggle button
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            themeManager.toggleColorScheme()
                         }
-                        
-                        Button(action: {
-                            Task {
-                                let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
-                                await viewModel.loadAPOD(for: yesterday)
-                            }
-                        }) {
-                            Label("Yesterday's APOD", systemImage: "star")
-                        }
-                        
-                        Divider()
-                        
-                        Button(action: {
-                            viewModel.showDatePicker()
-                        }) {
-                            Label("Select Date", systemImage: "calendar")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                    }) {
+                        Image(systemName: themeManager.isDarkMode ? "sun.max.fill" : "moon.fill")
+                            .foregroundColor(themeManager.isDarkMode ? .yellow : .primary)
                     }
-                    .disabled(viewModel.isLoading)
+                    .accessibilityLabel(themeManager.isDarkMode ? "Switch to light mode" : "Switch to dark mode")
                 }
                 
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -113,48 +101,85 @@ struct APODHomeView: View {
             await viewModel.loadTodaysAPOD()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            // Refresh content when app comes to foreground
+            
             Task {
                 await viewModel.refresh()
             }
         }
-
+        .preferredColorScheme(themeManager.colorSchemeOverride)
     }
 }
 
 struct APODContentView: View {
     let apod: APODModel
     let viewModel: APODViewModel
+    @ObservedObject private var themeManager = ThemeManager.shared
+    @Environment(\.colorScheme) private var systemColorScheme
+    @State private var isLoadingShare = false
+    
+    private var effectiveColorScheme: ColorScheme {
+        themeManager.colorSchemeOverride ?? systemColorScheme
+    }
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // Title
+                
                 Text(apod.title)
                     .font(.title)
                     .fontWeight(.bold)
+                    .foregroundColor(Color.primaryText(for: effectiveColorScheme))
                     .multilineTextAlignment(.leading)
                     .padding(.horizontal)
                 
-                // Date
+                
                 Text(viewModel.displayDate)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.secondaryText(for: effectiveColorScheme))
                     .padding(.horizontal)
                 
-                // Media Content
+                
                 if apod.isImage {
-                    AsyncImageView(url: apod.bestImageURL, contentMode: .fit) {
-                        viewModel.showImageDetail()
+                    ZStack(alignment: .bottomTrailing) {
+                        AsyncImageView(url: apod.bestImageURL, contentMode: .fit) {
+                            viewModel.showImageDetail()
+                        }
+                        .accessibleAPODContent(
+                            label: AccessibilityHelper.apodContentLabel(for: apod),
+                            hint: AccessibilityHelper.interactionHint(for: .tapToZoom),
+                            traits: [.isButton, .isImage]
+                        )
+                        
+                        
+                        Button(action: {
+                            Task {
+                                isLoadingShare = true
+                                await loadImageForSharing()
+                                isLoadingShare = false
+                            }
+                        }) {
+                            Group {
+                                if isLoadingShare {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                            }
+                            .foregroundColor(.white)
+                            .frame(width: 36, height: 36)
+                            .background(Color.black.opacity(0.6))
+                            .clipShape(Circle())
+                        }
+                        .disabled(isLoadingShare)
+                        .padding(12)
+                        .accessibilityLabel("Share image")
                     }
-                    .accessibleAPODContent(
-                        label: AccessibilityHelper.apodContentLabel(for: apod),
-                        hint: AccessibilityHelper.interactionHint(for: .tapToZoom),
-                        traits: [.isButton, .isImage]
-                    )
                     .padding(.horizontal)
                 } else {
-                    // Video content
+                    
                     VideoContentView(apod: apod)
                         .accessibleAPODContent(
                             label: "Video content: \(apod.title)",
@@ -164,22 +189,24 @@ struct APODContentView: View {
                         .padding(.horizontal)
                 }
                 
-                // Copyright
+            
                 if let copyright = apod.copyright {
                     Text("© \(copyright)")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.secondaryText(for: effectiveColorScheme))
                         .padding(.horizontal)
                 }
                 
-                // Explanation
+                
                 VStack(alignment: .leading, spacing: 8) {
                     Text("About")
                         .font(.headline)
                         .fontWeight(.semibold)
+                        .foregroundColor(Color.primaryText(for: effectiveColorScheme))
                     
                     Text(apod.explanation)
                         .font(.body)
+                        .foregroundColor(Color.primaryText(for: effectiveColorScheme))
                         .lineSpacing(4)
                 }
                 .padding(.horizontal)
@@ -190,44 +217,191 @@ struct APODContentView: View {
             await viewModel.refresh()
         }
     }
-}
-
-struct VideoContentView: View {
-    let apod: APODModel
     
-    var body: some View {
-        VStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.3))
-                .aspectRatio(16/9, contentMode: .fit)
-                .overlay {
-                    VStack(spacing: 8) {
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 50))
-                            .foregroundColor(.blue)
-                        
-                        Text("Video Content")
-                            .font(.headline)
-                        
-                        Text("Tap to view in browser")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .onTapGesture {
-                    if let url = URL(string: apod.url) {
-                        UIApplication.shared.open(url)
-                    }
-                }
+    @MainActor
+    private func loadImageForSharing() async {
+        var image: UIImage?
+        
+        
+        if let cached = await ImageCacheManager.shared.getImage(for: apod.bestImageURL) {
+            image = cached
+        } else if let downloaded = await ImageCacheManager.shared.downloadAndCache(from: apod.bestImageURL) {
             
-            Text("This APOD contains video content. Tap above to view in your browser.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            image = downloaded
+        }
+        
+        
+        if let imageToShare = image {
+            let shareText = "\(apod.title)\n\nNASA Astronomy Picture of the Day"
+            ShareHelper.share(items: [imageToShare, shareText])
         }
     }
 }
 
-#Preview {
-    APODHomeView()
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+    
+        controller.popoverPresentationController?.sourceView = UIView()
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
+
+
+struct ShareHelper {
+    static func share(items: [Any]) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
+            return
+        }
+        
+        let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        
+        
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = rootViewController.view
+            popover.sourceRect = CGRect(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        
+        rootViewController.present(activityVC, animated: true)
+    }
+}
+
+struct VideoContentView: View {
+    let apod: APODModel
+    @ObservedObject private var themeManager = ThemeManager.shared
+    @Environment(\.colorScheme) private var systemColorScheme
+    
+    private var effectiveColorScheme: ColorScheme {
+        themeManager.colorSchemeOverride ?? systemColorScheme
+    }
+    
+    
+    private var youtubeVideoID: String? {
+        let url = apod.url
+        
+        
+        if url.contains("youtube.com/embed/") {
+            return url.components(separatedBy: "youtube.com/embed/").last?.components(separatedBy: "?").first
+        }
+        
+        
+        if url.contains("youtube.com/watch") {
+            if let urlComponents = URLComponents(string: url),
+               let videoID = urlComponents.queryItems?.first(where: { $0.name == "v" })?.value {
+                return videoID
+            }
+        }
+        
+        
+        if url.contains("youtu.be/") {
+            return url.components(separatedBy: "youtu.be/").last?.components(separatedBy: "?").first
+        }
+        
+        return nil
+    }
+    
+    
+    private var vimeoVideoID: String? {
+        let url = apod.url
+        
+        
+        if url.contains("vimeo.com") {
+            let components = url.components(separatedBy: "/")
+            return components.last?.components(separatedBy: "?").first
+        }
+        
+        return nil
+    }
+    
+    
+    private var thumbnailURL: String? {
+        if let youtubeID = youtubeVideoID {
+            
+            
+            return "https://img.youtube.com/vi/\(youtubeID)/hqdefault.jpg"
+        }
+        
+        
+        return nil
+    }
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                
+                if let thumbnailURL = thumbnailURL {
+                    AsyncImage(url: URL(string: thumbnailURL)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(16/9, contentMode: .fit)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        case .failure:
+                            videoPlaceholder
+                        case .empty:
+                            videoPlaceholder
+                                .overlay {
+                                    ProgressView()
+                                }
+                        @unknown default:
+                            videoPlaceholder
+                        }
+                    }
+                } else {
+                    videoPlaceholder
+                }
+                
+                
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.5), radius: 10)
+            }
+            .onTapGesture {
+                if let url = URL(string: apod.url) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            
+            HStack {
+                Image(systemName: "play.rectangle.fill")
+                    .foregroundColor(.blue)
+                Text("Tap to watch video")
+                    .font(.subheadline)
+                    .foregroundColor(Color.secondaryText(for: effectiveColorScheme))
+            }
+        }
+    }
+    
+    private var videoPlaceholder: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(
+                LinearGradient(
+                    colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .aspectRatio(16/9, contentMode: .fit)
+            .overlay {
+                VStack(spacing: 8) {
+                    Image(systemName: "video.fill")
+                        .font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    Text("Video Content")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+            }
+    }
+}
+

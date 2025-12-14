@@ -39,18 +39,17 @@ class NavigationCoordinator: ObservableObject {
         showingSettings = false
     }
     
-    // Deep linking support
+    
     func handleDeepLink(_ url: URL) {
-        // Handle deep links for specific dates
-        // Example: apod://date/2024-01-15
+        
         guard url.scheme == "apod" else { return }
         
         if url.host == "date", let dateString = url.pathComponents.last {
-            // Parse date and navigate
+            
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd"
             if let date = formatter.date(from: dateString) {
-                // Notify view model to load specific date
+                
                 NotificationCenter.default.post(
                     name: .loadSpecificDate,
                     object: date

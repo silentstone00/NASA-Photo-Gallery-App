@@ -11,7 +11,7 @@ struct RetryManager {
     static let maxRetries = 3
     static let baseDelay: TimeInterval = 1.0
     
-    /// Executes an async operation with exponential backoff retry logic
+    
     static func withRetry<T>(
         maxAttempts: Int = 3,
         baseDelay: TimeInterval = 1.0,
@@ -25,22 +25,22 @@ struct RetryManager {
             } catch {
                 lastError = error
                 
-                // Don't retry for certain types of errors
+                
                 if let apodError = error as? APODError {
                     switch apodError {
                     case .invalidDate, .apiKeyMissing, .decodingError:
-                        throw apodError // Don't retry these errors
+                        throw apodError
                     default:
-                        break // Retry other errors
+                        break
                     }
                 }
                 
-                // If this was the last attempt, throw the error
+                
                 if attempt == maxAttempts {
                     break
                 }
                 
-                // Calculate delay with exponential backoff
+                
                 let delay = baseDelay * pow(2.0, Double(attempt - 1))
                 try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             }

@@ -9,6 +9,12 @@ import SwiftUI
 
 struct LoadingView: View {
     let message: String
+    @ObservedObject private var themeManager = ThemeManager.shared
+    @Environment(\.colorScheme) private var systemColorScheme
+    
+    private var effectiveColorScheme: ColorScheme {
+        themeManager.colorSchemeOverride ?? systemColorScheme
+    }
     
     init(message: String = "Loading...") {
         self.message = message
@@ -18,16 +24,14 @@ struct LoadingView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.5)
+                .tint(Color.secondaryText(for: effectiveColorScheme))
             
             Text(message)
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.secondaryText(for: effectiveColorScheme))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
+        .background(AppBackgroundColor())
     }
 }
 
-#Preview {
-    LoadingView(message: "Fetching today's astronomy picture...")
-}

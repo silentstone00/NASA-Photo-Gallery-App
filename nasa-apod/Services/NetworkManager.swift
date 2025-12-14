@@ -34,7 +34,7 @@ class NetworkManager: ObservableObject {
         monitor.cancel()
     }
     
-    // Helper method to check network connectivity before making requests
+    
     func checkConnectivity() throws {
         guard isConnected else {
             throw APODError.networkError(URLError(.notConnectedToInternet))

@@ -11,7 +11,7 @@ import Combine
 
 @MainActor
 class APODViewModel: ObservableObject {
-    // MARK: - Published Properties
+    
     @Published var currentAPOD: APODModel?
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -19,18 +19,18 @@ class APODViewModel: ObservableObject {
     @Published var showingDatePicker = false
     @Published var showingImageDetail = false
     
-    // MARK: - Dependencies
+    
     private let repository: APODRepositoryProtocol
     private var lastRequestedDate: Date?
     
-    // MARK: - Initialization
+    
     init(repository: APODRepositoryProtocol = APODRepository()) {
         self.repository = repository
     }
     
-    // MARK: - Public Methods
     
-    /// Loads APOD for the specified date, or today if no date provided
+    
+    
     func loadAPOD(for date: Date? = nil) async {
         let targetDate = date ?? Date()
         lastRequestedDate = targetDate
@@ -39,18 +39,18 @@ class APODViewModel: ObservableObject {
         clearError()
         
         do {
-            // Pass nil for today's date to let the API return the latest available APOD
+            
             let apod = try await repository.getAPOD(for: date)
             
-            // Only update if this is still the most recent request
+            
             if lastRequestedDate == targetDate {
                 currentAPOD = apod
                 
-                // Announce to VoiceOver users
+                
                 VoiceOverAnnouncer.announceContentLoaded(title: apod.title)
             }
         } catch {
-            // Only show error if this is still the most recent request
+            
             if lastRequestedDate == targetDate {
                 handleError(error)
             }
@@ -59,12 +59,12 @@ class APODViewModel: ObservableObject {
         await setLoadingState(false)
     }
     
-    /// Loads today's APOD
+    
     func loadTodaysAPOD() async {
         await loadAPOD(for: nil)
     }
     
-    /// Loads APOD for the currently selected date
+    
     func loadSelectedDateAPOD() async {
         guard selectedDate.isValidAPODDate else {
             let errorMessage = "Invalid date selected. Please choose a date between June 16, 1995 and today."
@@ -75,12 +75,12 @@ class APODViewModel: ObservableObject {
         await loadAPOD(for: selectedDate)
     }
     
-    /// Validates if a given date is valid for APOD service
+    
     func isValidDate(_ date: Date) -> Bool {
         return date.isValidAPODDate
     }
     
-    /// Gets a user-friendly error message for invalid dates
+    
     func getDateValidationMessage(for date: Date) -> String? {
         if date < APIConfiguration.earliestDate {
             return "APOD service started on June 16, 1995. Please select a later date."
@@ -90,7 +90,7 @@ class APODViewModel: ObservableObject {
         return nil
     }
     
-    /// Retries the last failed request
+    
     func retryLastRequest() async {
         if let lastDate = lastRequestedDate {
             await loadAPOD(for: lastDate)
@@ -99,7 +99,7 @@ class APODViewModel: ObservableObject {
         }
     }
     
-    /// Refreshes the current content
+    
     func refresh() async {
         if let currentDate = currentAPOD?.dateObject {
             await loadAPOD(for: currentDate)
@@ -108,7 +108,7 @@ class APODViewModel: ObservableObject {
         }
     }
     
-    // MARK: - UI State Management
+    
     
     func showDatePicker() {
         showingDatePicker = true
@@ -126,7 +126,7 @@ class APODViewModel: ObservableObject {
         showingImageDetail = false
     }
     
-    // MARK: - Computed Properties
+    
     
     var hasError: Bool {
         errorMessage != nil
@@ -148,7 +148,7 @@ class APODViewModel: ObservableObject {
         currentAPOD?.dateObject?.formattedForDisplay() ?? ""
     }
     
-    // MARK: - Private Methods
+    
     
     private func setLoadingState(_ loading: Bool) async {
         isLoading = loading
@@ -165,12 +165,12 @@ class APODViewModel: ObservableObject {
             errorMessage = "An unexpected error occurred: \(error.localizedDescription)"
         }
         
-        // Announce error to VoiceOver users
+        
         if let errorMsg = errorMessage {
             VoiceOverAnnouncer.announceError(errorMsg)
         }
         
-        // Log error for debugging
+        
         print("APODViewModel Error: \(error)")
     }
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension View {
-    /// Adds a conditional modifier to a view
+    
     @ViewBuilder
     func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
         if condition {
@@ -18,7 +18,7 @@ extension View {
         }
     }
     
-    /// Adds a drag gesture that only responds to vertical drags for dismissal
+    
     func dismissOnVerticalDrag(threshold: CGFloat = 100, onDismiss: @escaping () -> Void) -> some View {
         self.gesture(
             DragGesture()
@@ -30,7 +30,7 @@ extension View {
         )
     }
     
-    /// Adds haptic feedback on tap
+    
     func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) -> some View {
         self.onTapGesture {
             let impactFeedback = UIImpactFeedbackGenerator(style: style)
@@ -42,12 +42,12 @@ extension View {
 // MARK: - Gesture Extensions
 
 extension DragGesture.Value {
-    /// Returns true if the drag is primarily vertical
+    
     var isVerticalDrag: Bool {
         abs(translation.height) > abs(translation.width)
     }
     
-    /// Returns true if the drag is primarily horizontal
+    
     var isHorizontalDrag: Bool {
         abs(translation.width) > abs(translation.height)
     }

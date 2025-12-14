@@ -24,17 +24,17 @@ struct APODModel: Codable, Identifiable {
         case serviceVersion = "service_version"
     }
     
-    // Computed property to check if content is an image
+    
     var isImage: Bool {
         return mediaType.lowercased() == "image"
     }
     
-    // Computed property to get the best available image URL
+    
     var bestImageURL: String {
         return hdurl ?? url
     }
     
-    // Computed property to parse date string to Date object
+    
     var dateObject: Date? {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"

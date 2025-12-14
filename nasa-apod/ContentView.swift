@@ -14,7 +14,7 @@ struct ContentView: View {
         ZStack {
             APODHomeView()
             
-            // Network connectivity banner
+            
             if !networkManager.isConnected {
                 VStack {
                     NetworkBanner()
@@ -24,7 +24,7 @@ struct ContentView: View {
                 .animation(.easeInOut, value: networkManager.isConnected)
             }
         }
-        .preferredColorScheme(.none) // Support both light and dark mode
+        .preferredColorScheme(.none)
     }
 }
 
@@ -49,7 +49,3 @@ struct NetworkBanner: View {
 }
 
 
-
-#Preview {
-    ContentView()
-}

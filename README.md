@@ -1,4 +1,4 @@
-![sc1](https://github.com/user-attachments/assets/c2c28716-e8d5-4428-9993-9d2766db30ff)# NASA APOD Viewer
+# NASA APOD Viewer
 
 A native iOS application built with SwiftUI that displays NASA's Astronomy Picture of the Day (APOD).
 
@@ -67,10 +67,10 @@ Get your free NASA API key at: https://api.nasa.gov/
 ## Screenshots
 
 <p align="center">
-  <img src="sc1" width="200" />
-  <img src="sc2" width="200" />
-  <img src="sc3" width="200" />
-  <img src="sc4" width="200" />
+  <img src="nasa-apod/sc1.jpeg" width="200" />
+  <img src="nasa-apod/sc2.jpeg" width="200" />
+  <img src="nasa-apod/sc3.jpeg" width="200" />
+  <img src="nasa-apod/sc4.jpeg" width="200" />
 </p>
 
 

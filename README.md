@@ -48,7 +48,6 @@ A native iOS application built with SwiftUI that displays NASA's Astronomy Pictu
 - Share button overlay on images
 
 #### Dark Mode
-- Inspired from 💜 **Aspora** Website Theme
 - Full dark/light mode support
 - Manual toggle button in navigation bar
 - Custom theme colors:
